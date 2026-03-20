@@ -1,0 +1,33 @@
+# OpenTofu / Terraform generated files
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*
+*.tfplan
+
+# Encrypted state files (OpenTofu L4)
+*.tfstate.enc
+*.tfplan.enc
+
+# Sensitive var files — never commit
+*.auto.tfvars
+secrets.tfvars
+*secrets*
+
+# Custom provider build output
+custom-provider/terraform-provider-*
+custom-provider/bin/
+
+# Go build artifacts
+custom-provider/*.exe
+custom-provider/go.sum
+
+# Editor / OS
+.DS_Store
+.idea/
+*.swp
+*.swo
+.terraform/
+*.tfvars
