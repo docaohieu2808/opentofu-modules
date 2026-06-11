@@ -1,7 +1,6 @@
 variable "project_id" {
-  description = "GCP project ID"
+  description = "GCP project ID — set via TF_VAR_project_id or -var flag"
   type        = string
-  default     = "iac-devops-484714"
 }
 
 variable "region" {
@@ -28,9 +27,9 @@ variable "env" {
 }
 
 variable "credentials_file" {
-  description = "Path to GCP service account JSON credentials"
+  description = "Path to GCP service account JSON credentials — set via GOOGLE_APPLICATION_CREDENTIALS or TF_VAR_credentials_file"
   type        = string
-  default     = "/home/hieudc/iac-devops-terraform.json"
+  default     = ""
 }
 
 # L4: State encryption passphrase — inject via env var TF_VAR_state_encryption_passphrase

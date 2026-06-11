@@ -13,7 +13,7 @@ mock_provider "google" {
   mock_resource "google_compute_instance" {
     defaults = {
       instance_id = "1234567890"
-      self_link   = "https://www.googleapis.com/compute/v1/projects/iac-devops-484714/zones/us-central1-a/instances/dev-web-01"
+      self_link   = "https://www.googleapis.com/compute/v1/projects/your-gcp-project/zones/us-central1-a/instances/dev-web-01"
       network_interface = [
         {
           network_ip = "10.10.0.2"
@@ -30,7 +30,7 @@ mock_provider "google" {
 
   mock_resource "google_compute_disk" {
     defaults = {
-      self_link = "https://www.googleapis.com/compute/v1/projects/iac-devops-484714/zones/us-central1-a/disks/dev-web-01-data"
+      self_link = "https://www.googleapis.com/compute/v1/projects/your-gcp-project/zones/us-central1-a/disks/dev-web-01-data"
     }
   }
 }
@@ -44,7 +44,7 @@ run "test_compute_instance_defaults" {
   }
 
   variables {
-    project_id = "iac-devops-484714"
+    project_id = "your-gcp-project"
     name       = "dev-web-01"
     zone       = "us-central1-a"
   }
@@ -74,7 +74,7 @@ run "test_compute_name_validation_rejects_uppercase" {
   }
 
   variables {
-    project_id = "iac-devops-484714"
+    project_id = "your-gcp-project"
     name       = "Invalid_Name_With_Underscores"
     zone       = "us-central1-a"
   }
@@ -94,7 +94,7 @@ run "test_compute_no_public_ip" {
   }
 
   variables {
-    project_id       = "iac-devops-484714"
+    project_id       = "your-gcp-project"
     name             = "dev-internal-01"
     zone             = "us-central1-a"
     enable_public_ip = false
@@ -115,7 +115,7 @@ run "test_compute_additional_disks" {
   }
 
   variables {
-    project_id = "iac-devops-484714"
+    project_id = "your-gcp-project"
     name       = "dev-data-01"
     zone       = "us-central1-a"
     additional_disks = [
