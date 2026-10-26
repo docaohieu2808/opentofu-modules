@@ -118,12 +118,12 @@ jobs:
           mkdir -p "$TF_PLUGIN_CACHE_DIR"
           # The real backend is a GCS bucket; swap in the local backend for this offline run.
           printf 'terraform {\n  backend "local" {}\n}\n' > override.tf
-          tofu init -lockfile=readonly >/dev/null
 
-          # No passphrase -> the plan must be refused (there is no default to fall back on).
-          if tofu plan >/dev/null 2>&1; then echo "plan ran without a passphrase"; exit 1; fi
+          # No passphrase -> OpenTofu refuses to even initialise (there is no default to fall back on).
+          if tofu init -lockfile=readonly >/dev/null 2>&1; then echo "init ran without a passphrase"; exit 1; fi
 
           export TF_VAR_state_encryption_passphrase="ci-only-passphrase-0123456789"
+          tofu init -lockfile=readonly >/dev/null
           tofu plan -out=tfplan | tail -3
           tofu show -json tfplan | jq -e '[.resource_changes[] | select(.change.actions == ["create"])] | length == 5'
           # The saved plan file is encrypted: it is not a readable zip any more.
@@ -150,6 +150,7 @@ jobs:
       - name: go.mod and go.sum are tidy
         run: |
           go mod tidy
+          git diff --exit-code go.mod go.sum
       - name: gofmt
         run: test -z "$(gofmt -l .)" || { gofmt -d .; exit 1; }
       - name: go vet and go build
@@ -159,11 +160,11 @@ jobs:
       - name: go test (unit + acceptance tests against a real tofu binary)
         env:
           TF_ACC: "1"
-          TF_ACC_TERRAFORM_PATH: /usr/local/bin/tofu
           TF_ACC_PROVIDER_HOST: registry.opentofu.org
           TF_ACC_PROVIDER_NAMESPACE: lab
         run: |
-          command -v tofu
+          TF_ACC_TERRAFORM_PATH=$(command -v tofu)
+          export TF_ACC_TERRAFORM_PATH
           go test -v -count=1 ./...
       - name: Use the built provider from HCL (dev_overrides) and call its function
         working-directory: functions/custom
@@ -175,11 +176,3 @@ jobs:
           tofu output -json gcp_labels | jq -e '.environment == "dev-staging" and ."team-name" == "platform-ops" and ."cost-center" == "eng-001"'
           tofu output -raw greeting_sha256 | grep -Eq '^[0-9a-f]{64}$'
           tofu destroy -auto-approve
-      - name: TEMP upload generated go files
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: go-files
-          path: |
-            custom-provider/go.mod
-            custom-provider/go.sum
