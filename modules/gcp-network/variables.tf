@@ -91,19 +91,18 @@ variable "enable_https" {
 }
 
 variable "ssh_source_ranges" {
-  description = "Source IP ranges for SSH access"
+  description = "Source IP ranges for SSH access (private ranges by default; the whole internet is rejected)"
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+
+  validation {
+    condition     = !contains(var.ssh_source_ranges, "0.0.0.0/0")
+    error_message = "SSH must not be open to 0.0.0.0/0; list the ranges that need access."
+  }
 }
 
 variable "http_source_ranges" {
   description = "Source IP ranges for HTTP/HTTPS access"
   type        = list(string)
   default     = ["0.0.0.0/0"]
-}
-
-variable "labels" {
-  description = "Labels to apply to resources"
-  type        = map(string)
-  default     = {}
 }

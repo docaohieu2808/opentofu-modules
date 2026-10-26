@@ -1,0 +1,18 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+  - package-ecosystem: opentofu
+    directories:
+      - /environments/*
+      - /modules/*
+      - /levels/*
+      - /functions/*
+    schedule:
+      interval: weekly
+  - package-ecosystem: gomod
+    directory: /custom-provider
+    schedule:
+      interval: weekly

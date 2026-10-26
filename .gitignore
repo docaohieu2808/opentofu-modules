@@ -1,15 +1,14 @@
 # OpenTofu / Terraform generated files
 .terraform/
-.terraform.lock.hcl
+# .terraform.lock.hcl IS committed (reproducible provider versions)
 terraform.tfstate
 terraform.tfstate.backup
 *.tfstate
 *.tfstate.*
 *.tfplan
 
-# Encrypted state files (OpenTofu L4)
-*.tfstate.enc
-*.tfplan.enc
+# Output of the local-only learning levels
+**/out/
 
 # Sensitive var files — never commit
 *.auto.tfvars
@@ -22,7 +21,7 @@ custom-provider/bin/
 
 # Go build artifacts
 custom-provider/*.exe
-custom-provider/go.sum
+# go.sum IS committed
 
 # Editor / OS
 .DS_Store
@@ -31,3 +30,6 @@ custom-provider/go.sum
 *.swo
 .terraform/
 *.tfvars
+
+# Throwaway override files (e.g. offline-plan backend swap)
+override.tf

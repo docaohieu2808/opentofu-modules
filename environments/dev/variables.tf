@@ -27,15 +27,24 @@ variable "env" {
 }
 
 variable "credentials_file" {
-  description = "Path to GCP service account JSON credentials — set via GOOGLE_APPLICATION_CREDENTIALS or TF_VAR_credentials_file"
+  description = "Path to (or contents of) a GCP service account key. Empty means Application Default Credentials."
   type        = string
   default     = ""
 }
 
-# L4: State encryption passphrase — inject via env var TF_VAR_state_encryption_passphrase
+variable "ssh_source_ranges" {
+  description = "Source ranges allowed to SSH to the instance (never 0.0.0.0/0, the network module rejects it)"
+  type        = list(string)
+  default     = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"]
+}
+
 variable "state_encryption_passphrase" {
-  description = "Passphrase for OpenTofu state encryption (PBKDF2/AES-GCM)"
+  description = "Passphrase for the PBKDF2 key that encrypts state and plan files. No default on purpose: export TF_VAR_state_encryption_passphrase."
   type        = string
   sensitive   = true
-  default     = "change-me-use-env-var"
+
+  validation {
+    condition     = length(var.state_encryption_passphrase) >= 16
+    error_message = "Use a passphrase of at least 16 characters."
+  }
 }

@@ -1,16 +1,19 @@
+# L3: a dev environment composed from the L2 modules, with OpenTofu state encryption (L4).
 terraform {
-  required_version = ">= 1.9"
+  required_version = ">= 1.10"
 
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">= 5.0, < 7.0"
+      version = "~> 8.0"
     }
   }
 
-  # L4: OpenTofu-unique state encryption (not available in Terraform)
-  # Uses AES-GCM with a passphrase-derived key via PBKDF2.
-  # To activate: set env var TOFU_ENCRYPTION_PASSPHRASE before running tofu.
+  # State and plan files are encrypted with AES-GCM; the key is derived (PBKDF2) from a passphrase
+  # that has NO default: export TF_VAR_state_encryption_passphrase (16+ characters) first.
+  # Variables inside the encryption block need OpenTofu >= 1.9.
+  # `enforced = true` makes OpenTofu refuse to read unencrypted state. To adopt encryption on an
+  # existing unencrypted state use the migration steps in ../../encryption/.
   encryption {
     key_provider "pbkdf2" "state_key" {
       passphrase = var.state_encryption_passphrase
@@ -21,25 +24,29 @@ terraform {
     }
 
     state {
-      method = method.aes_gcm.state_method
-      # enforced = true  # uncomment to reject unencrypted state reads
+      method   = method.aes_gcm.state_method
+      enforced = true
     }
 
     plan {
-      method = method.aes_gcm.state_method
+      method   = method.aes_gcm.state_method
+      enforced = true
     }
   }
 
+  # Partial configuration: the bucket is not committed. Provide it at init time:
+  #   tofu init -backend-config="bucket=<your-state-bucket>"
+  # (CI and local experiments use `tofu init -backend=false`.)
   backend "gcs" {
-    bucket = "iac-devops-484714-tofu-state"
     prefix = "opentofu-modules/dev"
   }
 }
 
 provider "google" {
-  project     = var.project_id
-  region      = var.region
-  credentials = file(var.credentials_file)
+  project = var.project_id
+  region  = var.region
+  # null -> Application Default Credentials; a path or JSON -> that service account key
+  credentials = var.credentials_file != "" ? var.credentials_file : null
 }
 
 module "network" {
@@ -57,11 +64,9 @@ module "network" {
   ]
 
   enable_ssh        = true
-  ssh_source_ranges = ["0.0.0.0/0"]
+  ssh_source_ranges = var.ssh_source_ranges
   enable_http       = false
   enable_https      = false
-
-  labels = { env = var.env }
 }
 
 module "web_server" {
@@ -78,6 +83,8 @@ module "web_server" {
   labels     = { env = var.env, role = "web" }
 
   enable_public_ip = true
+
+  # Lab settings: easy to destroy. Production would set this to true.
   deletion_protection = false
 }
 
@@ -85,11 +92,12 @@ module "assets_bucket" {
   source = "../../modules/gcp-storage"
 
   project_id    = var.project_id
-  bucket_name   = "${var.project_id}-${var.env}-assets"
+  bucket_name   = "${var.env}-${var.project_id}-assets"
   location      = var.region
   storage_class = "STANDARD"
-  force_destroy = true
 
+  # Lab settings: the bucket may be deleted with its objects.
+  force_destroy      = true
   versioning_enabled = false
   labels             = { env = var.env }
 }
